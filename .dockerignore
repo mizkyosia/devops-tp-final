@@ -1,0 +1,6 @@
+**/.prettier*
+**/.eslint*
+**/*.md
+**/postman/
+**/assets/
+**/.git/
