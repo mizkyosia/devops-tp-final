@@ -6,12 +6,11 @@ Vagrant.configure("2") do |config|
 
     config.vm.define "devops-final" do |node|
       node.vm.hostname = "devops-final" # Hostname unique
-      node.vm.network "private_network", ip: "192.168.56.10" # Réseau interne/privé + IP statique
+      node.vm.network "private_network", ip: "192.168.56.10" # IP statique
 
       node.vm.disk :disk, size: "25GB", primary: true # Disque dur de 25 Go
 
       node.vm.provider "virtualbox" do |vb|
-        vb.gui = true # Affiche la GUI
         vb.memory = 2048 # 2 Go de RAM
       end
     end
@@ -19,7 +18,7 @@ Vagrant.configure("2") do |config|
   # Script de provisionnement (exécuté qd la VM est créée)
   config.vm.provision "shell", inline: <<-SHELL
     sudo apt-get update # Mise à jour des paquets
-    sudo apt-get install -y curl # Installation de curl
+    sudo apt-get install -y curl wget git # Installation de curl, wget et git
     curl -sfL https://get.k3s.io | sh - # Installation de k3s (non disponible dans les paquets)
   SHELL
 end

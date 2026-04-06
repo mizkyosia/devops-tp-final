@@ -1,0 +1,31 @@
+# DevOps - TP Final
+
+> *Léo Lewandowski  
+> Anaïs Masson   
+> Mathis Van Uytvanck*
+
+## Partie 1 - Préparation
+
+Nous avons décidé d'utiliser Vagrant pour le déploiement de la VM, par simplicité d'utilisation. La configuration se situe dans le [Vagrantfile](./Vagrantfile) à la racine du projet
+
+Nous avons choisi la distribution Debian Bookworm (Debian 12) car il s'agit de la dernière version stable en date, et donc la mieux maintenue.
+
+Pour mettre en route la VM, il suffit d'utiliser la commande `vagrant up` dans le dossier racine du TP. Il suffit ensuite d'utiliser `vagrant ssh` (dans le même dossier) pour se connecter à la machine virtuelle 
+
+## Partie 2 - Conteneurisation
+
+La configuration Docker du projet se situe dans le [Dockerfile](./Dockerfile) à la racine du projet. Il consiste en 8 grandes étapes :
+
+- Création d'une nouvelle image intermédiaire qui servira à "build" l'image finale
+- Copie du `package.json` et installation des packages `npm` nécessaires. Les packages de développement (`devDependencies`) sont exclus par le flag `--production` de `npm install`
+- Copie du contenu de l'API. Le fichier [.dockerignore](./.dockerignore) permet d'ignorer les fichiers inutiles au déploiement/bon fonctionnement de l'API (assets, config de Prettier, ...)
+- Création de l'image finale
+- Copie du code source + packages dans la nouvelle image
+
+Le build multi-stage n'est pas réellement nécessaire, mais permet de retirer ~25MB de l'image finale, à la fois en enlevant le cache d'installation NPM, et en réduisant le nombre de layers de l'image.
+
+La taille finale de l'image est donc de **_174MB_** (contre 202MB sans multi-stage build)
+
+L'image a été publiée sur Dockerhub sous le nom [`mizkyosia/devops-tp-final`](https://hub.docker.com/repository/docker/mizkyosia/devops-tp-final/general)
+
+## Partie 3 - Kubernetes
