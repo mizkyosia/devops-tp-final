@@ -1,0 +1,24 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - secrets/vault.yml
+  tasks:
+    - name: Afficher OS
+      debug:
+        msg: "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: Installer dépendances
+      apt:
+        pkg:
+          - wget
+          - curl
+          - git
+        state: latest
+        update_cache: yes
+    
+    - name: Installation script k3s
+      shell: |
+        curl -sfL https://get.k3s.io | sh -
+      args:
+        executable: /bin/bash

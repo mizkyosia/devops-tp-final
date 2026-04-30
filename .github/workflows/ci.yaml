@@ -1,0 +1,59 @@
+name: CI - Vagrant VM provision and Docker deploy
+
+permissions:
+    contents: read
+
+on:
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    build-and-deploy:
+        name: Build, provision and deploy
+        runs-on: [ self-hosted, linux, gpu ]
+        env:
+            VM_NAME: devops-final
+            VM_IP: 192.168.56.10
+            IMAGE_NAME: tp-final:ci
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Vérifier les outils nécessaires
+              run: |
+                  command -v vagrant
+                  command -v ansible-playbook
+                  command -v docker
+
+            - name: Lancement Vagrant
+              run: |
+                  cd "$GITHUB_WORKSPACE"
+                  vagrant up --provider=virtualbox
+
+            - name: Provision VM avec Ansible
+              env:
+                  ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+              run: |
+                  cd "$GITHUB_WORKSPACE"
+                  echo "$ANSIBLE_VAULT_PASSWORD" > vault-pass.txt
+                  chmod 600 vault-pass.txt
+                  ansible-playbook \
+                    -i "${VM_IP}," \
+                    --user=vagrant \
+                    --private-key ".vagrant/machines/${VM_NAME}/virtualbox/private_key" \
+                    --ssh-common-args='-o StrictHostKeyChecking=no' \
+                    ansible/playbook.yaml \
+                    --vault-password-file=vault-pass.txt
+
+            - name: Build image Docker
+              run: |
+                  cd "$GITHUB_WORKSPACE"
+                  docker build -t "$IMAGE_NAME" .
+
+            - name: Deploy k3s cluster
+              run: |
+                  cd "$GITHUB_WORKSPACE"
+                  vagrant ssh -- -c 'sudo k3s kubectl apply -f manifest.yaml'
