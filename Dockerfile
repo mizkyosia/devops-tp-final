@@ -8,7 +8,7 @@ COPY /api .
 # Image plus légère de ~25MB car on transfère uniquement les fichiers nécessaires, pas le cache d'installation
 # De plus, moins d'instructions Docker = moins de layers, donc image plus légère
 FROM node:alpine
-WORKDIR /api
+WORKDIR /apiarch 
 
 # .dockerignore exclut les fichiers inutiles, donc on peut copier tout le contenu du builder
 COPY --from=builder /api ./ 
