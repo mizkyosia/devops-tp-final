@@ -23,5 +23,5 @@
     
     - name: Copier manifest.yaml
       copy:
-        src: ../manifest.yaml
+        src: manifest.yaml
         dest: /home/vagrant/manifest.yaml
