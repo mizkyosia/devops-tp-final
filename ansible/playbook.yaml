@@ -1,8 +1,6 @@
 ---
-- hosts: vm-kubernetes
+- hosts: all
   become: true
-  vars_files:
-    - secrets/vault.yml
   tasks:
     - name: Afficher OS
       debug:
