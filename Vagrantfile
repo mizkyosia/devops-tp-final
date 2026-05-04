@@ -4,8 +4,8 @@ Vagrant.configure("2") do |config|
   config.vm.box = "debian/bookworm64" # Box Debian 12 (Bookworm) 64 bits
   config.vm.box_version = "12.20250126.1" 
 
-    config.vm.define "devops-final" do |node|
-      node.vm.hostname = "devops-final" # Hostname unique
+    config.vm.define "vm-kubernetes" do |node|
+      node.vm.hostname = "vm-kubernetes" # Hostname unique
       node.vm.network "private_network", ip: "192.168.56.10" # IP statique
 
       node.vm.disk :disk, size: "25GB", primary: true # Disque dur de 25 Go
@@ -16,9 +16,8 @@ Vagrant.configure("2") do |config|
     end
 
   # Script de provisionnement (exécuté qd la VM est créée)
-  config.vm.provision "shell", inline: <<-SHELL
-    sudo apt-get update # Mise à jour des paquets
-    sudo apt-get install -y curl wget git # Installation de curl, wget et git
-    curl -sfL https://get.k3s.io | sh - # Installation de k3s (non disponible dans les paquets)
-  SHELL
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "provision.yml" # Chemin vers le playbook Ansible
+    ansible.inventory_path = "inventory.ini" # Chemin vers l'inventaire Ansible
+  end
 end

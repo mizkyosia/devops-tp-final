@@ -31,22 +31,7 @@ jobs:
             - name: Lancement Vagrant
               run: |
                   cd "$GITHUB_WORKSPACE"
-                  vagrant up --provider=virtualbox
-
-            - name: Provision VM avec Ansible
-              env:
-                  ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
-              run: |
-                  cd "$GITHUB_WORKSPACE"
-                  echo "$ANSIBLE_VAULT_PASSWORD" > vault-pass.txt
-                  chmod 600 vault-pass.txt
-                  ansible-playbook \
-                    -i "${VM_IP}," \
-                    --user=vagrant \
-                    --private-key ".vagrant/machines/${VM_NAME}/virtualbox/private_key" \
-                    --ssh-common-args='-o StrictHostKeyChecking=no' \
-                    ansible/playbook.yaml \
-                    --vault-password-file=vault-pass.txt
+                  vagrant up
 
             - name: Build image Docker
               run: |
