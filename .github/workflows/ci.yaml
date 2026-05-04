@@ -37,11 +37,9 @@ jobs:
             - name: Build image Docker
               run: |
                   cd "$GITHUB_WORKSPACE"
-                  ls -R
-                  pwd
                   docker build -t "$IMAGE_NAME" .
 
             - name: Deploy k3s cluster
               run: |
                   cd "$GITHUB_WORKSPACE"
-                  vagrant ssh -- -c 'sudo k3s kubectl apply -f manifest.yaml'
+                  vagrant ssh -- "sudo k3s kubectl apply -f manifest.yaml"
