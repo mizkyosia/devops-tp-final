@@ -1,8 +1,8 @@
 FROM node:alpine AS builder
 WORKDIR /api
-COPY /api/package.json ./
+COPY ./api/package.json ./
 RUN npm install --production
-COPY /api .
+COPY ./api .
 
 # Étape finale : image légère pour exécuter l'application
 # Image plus légère de ~25MB car on transfère uniquement les fichiers nécessaires, pas le cache d'installation
