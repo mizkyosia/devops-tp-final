@@ -69,7 +69,7 @@ spec:
   template:
     metadata:
       labels:
-        app: devops-tp-api
+        app: devops-api
     spec:
       containers:
         - name: devops-tp-api
