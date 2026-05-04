@@ -36,6 +36,7 @@ jobs:
             - name: Build image Docker
               run: |
                   cd "$GITHUB_WORKSPACE"
+                  ls .
                   docker build -t "$IMAGE_NAME" .
 
             - name: Deploy k3s cluster
