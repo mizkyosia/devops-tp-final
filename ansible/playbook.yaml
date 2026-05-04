@@ -20,3 +20,8 @@
         curl -sfL https://get.k3s.io | sh -
       args:
         executable: /bin/bash
+    
+    - name: Copier manifest.yaml
+      copy:
+        src: manifest.yaml
+        dest: /home/vagrant/manifest.yaml
