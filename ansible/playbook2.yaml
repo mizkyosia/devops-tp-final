@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: vm-monitoring
   become: true
   tasks:
     - name: Install apt packages
@@ -13,20 +13,23 @@
         update_cache: yes
 
     - name: Add Grafana repository key
-      apt_key:
-        url: https://apt.grafana.com/gpg.key
-        state: present
+      shell: curl https://apt.grafana.com/gpg.key | apt-key add -
+      args:
+        warn: no
 
     - name: Add Grafana repository
-      apt_repository:
-        repo: deb https://apt.grafana.com stable main
-        state: present
+      shell: add-apt-repository "deb https://apt.grafana.com stable main"
+      register: grafana_repo_added
+      changed_when: "'added' in grafana_repo_added.stdout"
+
+    - name: Update apt cache after adding Grafana repository
+      apt:
+        update_cache: yes
 
     - name: Install Grafana
       apt:
         name: grafana-server
         state: latest
-        update_cache: yes
 
     - name: Create prometheus system user
       user:
