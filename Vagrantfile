@@ -15,8 +15,23 @@ Vagrant.configure("2") do |config|
       end
     end
 
+    config.vm.define "vm-monitoring" do |node|
+      node.vm.hostname = "vm-monitoring" # Hostname unique
+      node.vm.network "private_network", ip: "192.168.56.11" # IP statique
+
+      node.vm.disk :disk, size: "10GB", primary: true # Disque dur de 25 Go
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = 2048 # 2 Go de RAM
+      end
+    end
+
   # Script de provisionnement (exécuté qd la VM est créée)
-  config.vm.provision "ansible" do |ansible|
+  config.vm.provision "vm1", type: "ansible" do |ansible|
     ansible.playbook = "ansible/playbook.yaml" # Chemin vers le playbook Ansible
+  end
+
+  config.vm.provision "vm2", type: "ansible" do |ansible|
+    ansible.playbook = "ansible/playbook2.yaml" # Chemin vers le playbook Ansible
   end
 end

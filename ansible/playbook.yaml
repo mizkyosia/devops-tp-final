@@ -2,10 +2,6 @@
 - hosts: all
   become: true
   tasks:
-    - name: Afficher OS
-      debug:
-        msg: "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
-
     - name: Installer dépendances
       apt:
         pkg:
