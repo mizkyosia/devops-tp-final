@@ -4,7 +4,7 @@
   tasks:
     - name: Debug hostvars
       debug:
-        var: hostvars['vm-kubernetes']
+        var: hostvars['vm-kubernetes'].ansible_host
 
     - name: Installer dépendances
       apt:
