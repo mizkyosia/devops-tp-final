@@ -2,10 +2,6 @@
 - hosts: vm-kubernetes
   become: true
   tasks:
-    - name: Debug hostvars
-      debug:
-        var: hostvars['vm-kubernetes'].ansible_host
-
     - name: Installer dépendances
       apt:
         pkg:
