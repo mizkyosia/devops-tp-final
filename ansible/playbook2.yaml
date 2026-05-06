@@ -24,7 +24,8 @@
 
     - name: Add Docker repository
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_lsb.codename }} stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{
+          ansible_lsb.codename }} stable"
         state: present
 
     - name: Install Docker
@@ -51,14 +52,14 @@
       file:
         path: /opt/monitoring
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     # Prometheus configuration
     - name: Create Prometheus config directory
       file:
         path: /opt/monitoring/prometheus
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Create prometheus.yml configuration
       copy:
@@ -69,14 +70,14 @@
           scrape_configs:
             - job_name: 'node_exporter'
               static_configs:
-                      - targets: ["192.168.56.10:9100"]
-                        labels:
-                        instance: 'k3s'
-                      - targets: ["192.168.56.11:9100"]
-                        labels:
-                        instance: 'monitoring'
+                - targets: ["192.168.56.10:9100"]
+                  labels:
+                    instance: 'k3s'
+                - targets: ["192.168.56.11:9100"]
+                  labels:
+                    instance: 'monitoring'
         dest: /opt/monitoring/prometheus/prometheus.yml
-        mode: '0644'
+        mode: "0644"
 
     # Docker Compose configuration
     - name: Create docker-compose.yml for monitoring stack
@@ -143,14 +144,14 @@
             monitoring:
               driver: bridge
         dest: /opt/monitoring/docker-compose.yml
-        mode: '0644'
+        mode: "0644"
 
     # Grafana provisioning configuration
     - name: Create Grafana provisioning directories
       file:
         path: "{{ item }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
       loop:
         - /opt/monitoring/grafana/provisioning
         - /opt/monitoring/grafana/provisioning/datasources
@@ -169,7 +170,7 @@
               isDefault: true
               editable: true
         dest: /opt/monitoring/grafana/provisioning/datasources/prometheus.yml
-        mode: '0644'
+        mode: "0644"
 
     - name: Create Grafana dashboards provisioning
       copy:
@@ -186,15 +187,14 @@
               options:
                 path: /etc/grafana/provisioning/dashboards
         dest: /opt/monitoring/grafana/provisioning/dashboards/dashboards.yml
-        mode: '0644'
+        mode: "0644"
 
     # Download Node Exporter dashboard
     - name: Download Node Exporter dashboard JSON
       get_url:
         url: https://raw.githubusercontent.com/rfmoz/grafana-dashboards/refs/heads/master/prometheus/node-exporter-full.json
         dest: /opt/monitoring/grafana/provisioning/dashboards/node-exporter-dashboard.json
-        mode: '0644'
-
+        mode: "0644"
 
     # Start monitoring stack
     - name: Start monitoring stack with docker-compose
