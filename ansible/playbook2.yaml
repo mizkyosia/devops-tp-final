@@ -2,219 +2,237 @@
 - hosts: vm-monitoring
   become: true
   tasks:
-    - name: Install apt packages
+    # System dependencies
+    - name: Update apt cache and install dependencies
       apt:
         pkg:
-          - git
-          - curl
           - wget
-          - software-properties-common
+          - curl
+          - git
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
         state: latest
         update_cache: yes
 
-    - name: Add Grafana repository key
-      shell: curl https://apt.grafana.com/gpg.key | apt-key add -
+    # Docker installation
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_lsb.codename }} stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: yes
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install Docker Compose
+      shell: |
+        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
       args:
-        warn: no
+        executable: /bin/bash
 
-    - name: Add Grafana repository
-      shell: add-apt-repository "deb https://apt.grafana.com stable main"
-      register: grafana_repo_added
-      changed_when: "'added' in grafana_repo_added.stdout"
+    # Create monitoring directory
+    - name: Create monitoring directory
+      file:
+        path: /opt/monitoring
+        state: directory
+        mode: '0755'
 
-    - name: Update apt cache after adding Grafana repository
-      apt:
-        update_cache: yes
+    # Prometheus configuration
+    - name: Create Prometheus config directory
+      file:
+        path: /opt/monitoring/prometheus
+        state: directory
+        mode: '0755'
 
-    - name: Install Grafana
-      apt:
-        name: grafana-server
-        state: latest
+    - name: Create prometheus.yml configuration
+      copy:
+        content: |
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+            external_labels:
+              monitor: 'monitoring-stack'
 
-    - name: Create prometheus system user
-      user:
-        name: prometheus
-        system: yes
-        shell: /bin/false
-        createhome: no
+          scrape_configs:
+            - job_name: 'prometheus'
+              static_configs:
+                - targets: ['localhost:9090']
 
-    - name: Create node_exporter system user
-      user:
-        name: node_exporter
-        system: yes
-        shell: /bin/false
-        createhome: no
+            - job_name: 'node-exporter'
+              static_configs:
+                - targets: ['localhost:9100']
 
-    - name: Create Prometheus directories
+            - job_name: 'kubernetes-cluster'
+              kubernetes_sd_configs:
+                - api_server: 'https://192.168.56.10:6443'
+                  tls_config:
+                    ca_file: /etc/kubernetes/ca.crt
+                    insecure_skip_verify: true
+              scheme: https
+              bearer_token_file: /etc/kubernetes/token
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_node_name]
+                  action: replace
+                  target_label: node
+        dest: /opt/monitoring/prometheus/prometheus.yml
+        mode: '0644'
+
+    # Docker Compose configuration
+    - name: Create docker-compose.yml for monitoring stack
+      copy:
+        content: |
+          version: '3.8'
+
+          services:
+            prometheus:
+              image: prom/prometheus:latest
+              container_name: prometheus
+              volumes:
+                - /opt/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+                - prometheus-data:/prometheus
+              ports:
+                - "9090:9090"
+              command:
+                - '--config.file=/etc/prometheus/prometheus.yml'
+                - '--storage.tsdb.path=/prometheus'
+              restart: unless-stopped
+              networks:
+                - monitoring
+
+            node-exporter:
+              image: prom/node-exporter:latest
+              container_name: node-exporter
+              ports:
+                - "9100:9100"
+              command:
+                - '--path.procfs=/host/proc'
+                - '--path.sysfs=/host/sys'
+                - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+              volumes:
+                - /proc:/host/proc:ro
+                - /sys:/host/sys:ro
+                - /:/rootfs:ro
+              restart: unless-stopped
+              networks:
+                - monitoring
+
+            grafana:
+              image: grafana/grafana:latest
+              container_name: grafana
+              environment:
+                - GF_SECURITY_ADMIN_USER=admin
+                - GF_SECURITY_ADMIN_PASSWORD=admin
+                - GF_INSTALL_PLUGINS=grafana-piechart-panel
+              volumes:
+                - grafana-data:/var/lib/grafana
+                - /opt/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+              ports:
+                - "3000:3000"
+              depends_on:
+                - prometheus
+              restart: unless-stopped
+              networks:
+                - monitoring
+
+          volumes:
+            prometheus-data:
+            grafana-data:
+
+          networks:
+            monitoring:
+              driver: bridge
+        dest: /opt/monitoring/docker-compose.yml
+        mode: '0644'
+
+    # Grafana provisioning configuration
+    - name: Create Grafana provisioning directories
       file:
         path: "{{ item }}"
         state: directory
-        owner: prometheus
-        group: prometheus
         mode: '0755'
       loop:
-        - /etc/prometheus
-        - /var/lib/prometheus
+        - /opt/monitoring/grafana/provisioning
+        - /opt/monitoring/grafana/provisioning/datasources
+        - /opt/monitoring/grafana/provisioning/dashboards
 
-    - name: Download Prometheus
-      get_url:
-        url: https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
-        dest: /tmp/prometheus-2.45.0.linux-amd64.tar.gz
-        mode: '0644'
-
-    - name: Extract Prometheus
-      unarchive:
-        src: /tmp/prometheus-2.45.0.linux-amd64.tar.gz
-        dest: /tmp
-        remote_src: yes
-
-    - name: Copy Prometheus binary
+    - name: Create Grafana datasources provisioning
       copy:
-        src: /tmp/prometheus-2.45.0.linux-amd64/prometheus
-        dest: /usr/local/bin/prometheus
-        owner: prometheus
-        group: prometheus
-        mode: '0755'
-        remote_src: yes
-
-    - name: Copy Promtool binary
-      copy:
-        src: /tmp/prometheus-2.45.0.linux-amd64/promtool
-        dest: /usr/local/bin/promtool
-        owner: prometheus
-        group: prometheus
-        mode: '0755'
-        remote_src: yes
-
-    - name: Copy Prometheus configuration
-      copy:
-        src: /tmp/prometheus-2.45.0.linux-amd64/prometheus.yml
-        dest: /etc/prometheus/prometheus.yml
-        owner: prometheus
-        group: prometheus
-        mode: '0644'
-        remote_src: yes
-
-    - name: Configure Prometheus scrape config
-      lineinfile:
-        path: /etc/prometheus/prometheus.yml
-        regexp: '  - job_name: ''prometheus'''
-        line: '  - job_name: ''prometheus'''
-        state: present
-
-    - name: Download Node Exporter
-      get_url:
-        url: https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
-        dest: /tmp/node_exporter-1.6.1.linux-amd64.tar.gz
-        mode: '0644'
-
-    - name: Extract Node Exporter
-      unarchive:
-        src: /tmp/node_exporter-1.6.1.linux-amd64.tar.gz
-        dest: /tmp
-        remote_src: yes
-
-    - name: Copy Node Exporter binary
-      copy:
-        src: /tmp/node_exporter-1.6.1.linux-amd64/node_exporter
-        dest: /usr/local/bin/node_exporter
-        owner: node_exporter
-        group: node_exporter
-        mode: '0755'
-        remote_src: yes
-
-    - name: Create Prometheus systemd service
-      copy:
-        dest: /etc/systemd/system/prometheus.service
         content: |
-          [Unit]
-          Description=Prometheus
-          Wants=network-online.target
-          After=network-online.target
+          apiVersion: 1
 
-          [Service]
-          User=prometheus
-          Group=prometheus
-          Type=simple
-          ExecStart=/usr/local/bin/prometheus \
-            --config.file /etc/prometheus/prometheus.yml \
-            --storage.tsdb.path /var/lib/prometheus/ \
-            --web.console.templates=/etc/prometheus/consoles \
-            --web.console.libraries=/etc/prometheus/console_libraries
-
-          [Install]
-          WantedBy=multi-user.target
-        owner: root
-        group: root
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://prometheus:9090
+              isDefault: true
+              editable: true
+        dest: /opt/monitoring/grafana/provisioning/datasources/prometheus.yml
         mode: '0644'
 
-    - name: Create Node Exporter systemd service
+    - name: Create Grafana dashboards provisioning
       copy:
-        dest: /etc/systemd/system/node_exporter.service
         content: |
-          [Unit]
-          Description=Node Exporter
-          After=network.target
+          apiVersion: 1
 
-          [Service]
-          User=node_exporter
-          Group=node_exporter
-          Type=simple
-          ExecStart=/usr/local/bin/node_exporter
-
-          [Install]
-          WantedBy=multi-user.target
-        owner: root
-        group: root
+          providers:
+            - name: 'default'
+              orgId: 1
+              folder: ''
+              type: file
+              disableDeletion: false
+              editable: true
+              options:
+                path: /etc/grafana/provisioning/dashboards
+        dest: /opt/monitoring/grafana/provisioning/dashboards/dashboards.yml
         mode: '0644'
 
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
+    # Start monitoring stack
+    - name: Start monitoring stack with docker-compose
+      shell: |
+        cd /opt/monitoring && docker-compose up -d
+      args:
+        executable: /bin/bash
 
-    - name: Enable and start Node Exporter
-      systemd:
-        name: node_exporter
-        enabled: yes
-        state: started
+    - name: Wait for Prometheus to be ready
+      uri:
+        url: http://localhost:9090/-/healthy
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 2
 
-    - name: Enable and start Prometheus
-      systemd:
-        name: prometheus
-        enabled: yes
-        state: started
+    - name: Wait for Grafana to be ready
+      uri:
+        url: http://localhost:3000/api/health
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 2
 
-    - name: Wait for Prometheus to start
-      wait_for:
-        port: 9090
-        delay: 2
-        timeout: 30
-
-    - name: Wait for Node Exporter to start
-      wait_for:
-        port: 9100
-        delay: 2
-        timeout: 30
-
-    - name: Enable and start Grafana
-      systemd:
-        name: grafana-server
-        enabled: yes
-        state: started
-
-    - name: Wait for Grafana to start
-      wait_for:
-        port: 3000
-        delay: 2
-        timeout: 30
-
-    - name: Create Grafana Prometheus data source
-      grafana_datasource:
-        name: Prometheus
-        grafana_url: http://localhost:3000
-        grafana_api_key: admin
-        state: present
-        ds_type: prometheus
-        ds_url: http://localhost:9090
-        access: proxy
-      ignore_errors: yes
+    - name: Display access information
+      debug:
+        msg:
+          - "Monitoring stack deployed successfully!"
+          - "Prometheus URL: http://192.168.56.11:9090"
+          - "Grafana URL: http://192.168.56.11:3000"
+          - "Grafana default credentials: admin / admin"
+          - "Node Exporter: http://192.168.56.11:9100"
