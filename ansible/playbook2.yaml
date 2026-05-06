@@ -65,31 +65,16 @@
         content: |
           global:
             scrape_interval: 15s
-            evaluation_interval: 15s
-            external_labels:
-              monitor: 'monitoring-stack'
 
           scrape_configs:
-            - job_name: 'prometheus'
+            - job_name: 'node_exporter'
               static_configs:
-                - targets: ['localhost:9090']
-
-            - job_name: 'node-exporter'
-              static_configs:
-                - targets: ['localhost:9100']
-
-            - job_name: 'kubernetes-cluster'
-              kubernetes_sd_configs:
-                - api_server: 'https://192.168.56.10:6443'
-                  tls_config:
-                    ca_file: /etc/kubernetes/ca.crt
-                    insecure_skip_verify: true
-              scheme: https
-              bearer_token_file: /etc/kubernetes/token
-              relabel_configs:
-                - source_labels: [__meta_kubernetes_node_name]
-                  action: replace
-                  target_label: node
+                - targets: ["{{ hostvars['k3s-node'].internal_ip }}:9100"]
+                  labels:
+                    instance: 'k3s'
+                - targets: ["{{ hostvars['monitoring-node'].internal_ip }}:9100"]
+                  labels:
+                    instance: 'monitoring'
         dest: /opt/monitoring/prometheus/prometheus.yml
         mode: '0644'
 
