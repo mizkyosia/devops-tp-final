@@ -211,7 +211,7 @@
         executable: /bin/bash
 
     - name: Wait for Prometheus to be ready
-      run: |
+      shell: |
         until curl -s http://localhost:9090/api/v1/targets | grep 'health":"up'; do
           echo "Waiting for Prometheus to be ready..."
           sleep 2
