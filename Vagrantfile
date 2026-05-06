@@ -29,6 +29,7 @@ Vagrant.configure("2") do |config|
   # Script de provisionnement (exécuté qd la VM est créée)
   config.vm.provision "vm1", type: "ansible" do |ansible|
     ansible.playbook = "ansible/playbook.yaml" # Chemin vers le playbook Ansible
+    ansible.inventory_path = "ansible/inventory.ini" # Chemin vers le fichier d'inventaire Ansible
   end
 
   config.vm.provision "vm2", type: "ansible" do |ansible|

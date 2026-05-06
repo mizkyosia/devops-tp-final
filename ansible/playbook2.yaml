@@ -188,6 +188,14 @@
         dest: /opt/monitoring/grafana/provisioning/dashboards/dashboards.yml
         mode: '0644'
 
+    # Download Node Exporter dashboard
+    - name: Download Node Exporter dashboard JSON
+      get_url:
+        url: https://raw.githubusercontent.com/rfmoz/grafana-dashboards/refs/heads/master/prometheus/node-exporter-full.json
+        dest: /opt/monitoring/grafana/provisioning/dashboards/node-exporter-dashboard.json
+        mode: '0644'
+
+
     # Start monitoring stack
     - name: Start monitoring stack with docker-compose
       shell: |
