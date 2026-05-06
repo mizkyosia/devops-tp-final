@@ -42,4 +42,4 @@ jobs:
             - name: Deploy k3s cluster
               run: |
                   cd "$GITHUB_WORKSPACE"
-                  vagrant ssh -- "sudo k3s kubectl apply -f manifest.yaml"
+                  vagrant ssh vm-kubernetes -- "sudo k3s kubectl apply -f manifest.yaml"
