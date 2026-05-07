@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
     end
 
   # Node exporter est installé et lancé sur les 2 VMs
-  config.vm.provider "node-exporter", type: "ansible" do |ansible|
+  config.vm.provider "node_exporter", type: "ansible" do |ansible|
     ansible.playbook = "ansible/node-exporter.yaml" # Chemin vers le playbook Ansible
   end
 
