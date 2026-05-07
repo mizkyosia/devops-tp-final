@@ -30,3 +30,10 @@ L'image a été publiée sur Dockerhub sous le nom [`mizkyosia/devops-tp-final`]
 
 ## Partie 3 - Kubernetes
 
+On crée notre [manifest](./manifest.yml) de déploiement Kubernetes, qui contient 4 systèmes :
+
+- Un `StatefulSet` permettant de déployer la BDD. Ici, il n'y a pas réellement de différence entre StatefulSet et Deployment car on ne mets qu'une seule réplique de la BDD
+- Un `Deployment` permettant de déployer l'API elle-même, depuis le container Docker publié sur DockerHub
+- 2 services `NodePort` permettant à Prometheus de se connecter à la BDD et l'API pour le monitoring
+
+## Partie 4 - CI/CD
