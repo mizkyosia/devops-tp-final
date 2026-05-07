@@ -99,13 +99,13 @@ kind: Service
 metadata:
   name: mysql-service
 spec:
-  clusterIP: None
   selector:
     app: devops-mysql
   ports:
     - name: mysql
       port: 3306
       targetPort: 3306
+      nodePort: 9200
       protocol: TCP
   type: NodePort
 ---
@@ -120,6 +120,6 @@ spec:
     - name: http
       port: 80
       targetPort: 3000
-      nodePort: 30080
+      nodePort: 9100
       protocol: TCP
   type: NodePort
