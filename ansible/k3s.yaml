@@ -19,5 +19,6 @@
     
     - name: Copier manifest.yaml
       copy:
-        src: ../manifest.yml
-        dest: /home/vagrant/manifest.yaml
+        src: ../k8s/
+        dest: /home/vagrant/k8s/
+        mode: "0644"

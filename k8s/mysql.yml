@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: devops-mysql
+spec:
+  serviceName: mysql-service
+  metadata:
+    labels:
+      app: devops-mysql
+  containers:
+    - name: devops-tp-mysql
+      image: mysql:latest
+      envFrom: 
+        - secretRef:
+            name: mysql-secret
+      ports:
+        - containerPort: 3306
+          name: mysql
+      volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      resources:
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
+        requests:
+          memory: "512Mi"
+          cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: devops-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: isen_user_root_password
+  MYSQL_USER: isen_user
+  MYSQL_PASSWORD: isen_user_password
+  MYSQL_DATABASE: devops_db
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -50,4 +50,18 @@ On définit notre [pipeline CI/CD](./.github/workflows/ci.yaml), qui est compos�
 
 ## Partie 5 - Monitoring
 
-On crée donc un [2ème playbook](./ansible/playbook2.yaml) qui nous servira de 
+Nous avons ici besoin d'une seconde VM. Nous allons donc rajouter une nouvelle déclaration de VM dans le [Vagrantfile](./Vagrantfile).
+
+Nous allons aussi avoir besoin d'un nouveau provisioning Ansible.
+On crée donc un [2ème playbook](./ansible/playbook2.yaml) qui permet de mettre en place tous les outils nécessaires au monitoring. Il va :
+
+- Installer et lancer Docker
+- Installer docker compose
+- Configurer Prometheus
+- Créer `docker compose` avec Prometheus, Grafana et `prometheus/node_exporter`
+- Créer les ressources nécessaires à Grafana (monitoring directories)
+- Télécharger le dashboard et l'ajouter à Grafana
+- Lancer le `docker compose`
+- Vérifier que les 3 processus marchent bien
+
+Enfin, on modifie le manifest Kubernetes pour rajouter un pod `prometheus/node_exporter` pour monitorer nos déploiements.

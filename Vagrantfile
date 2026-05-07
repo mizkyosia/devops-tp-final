@@ -26,12 +26,18 @@ Vagrant.configure("2") do |config|
       end
     end
 
-  # Script de provisionnement (exécuté qd la VM est créée)
-  config.vm.provision "vm1", type: "ansible" do |ansible|
-    ansible.playbook = "ansible/playbook.yaml" # Chemin vers le playbook Ansible
+  # Node exporter est installé et lancé sur les 2 VMs
+  config.vm.provider "node-exporter", type: "ansible" do |ansible|
+    ansible.playbook = "ansible/node-exporter.yaml" # Chemin vers le playbook Ansible
   end
 
+  # Provisionnement vm k3s
+  config.vm.provision "vm1", type: "ansible" do |ansible|
+    ansible.playbook = "ansible/k3s.yaml" # Chemin vers le playbook Ansible
+  end
+
+  # Provisionnement vm monitoring
   config.vm.provision "vm2", type: "ansible" do |ansible|
-    ansible.playbook = "ansible/playbook2.yaml" # Chemin vers le playbook Ansible
+    ansible.playbook = "ansible/monitoring.yaml" # Chemin vers le playbook Ansible
   end
 end

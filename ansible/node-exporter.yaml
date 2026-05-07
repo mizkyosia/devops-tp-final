@@ -1,0 +1,76 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    # System dependencies
+    - name: Mise à jour des paquets + installation des dépendances
+      apt:
+        pkg:
+          - wget
+          - curl
+          - git
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+        state: latest
+        update_cache: yes
+
+    # Docker installation
+    - name: Ajout clé GPG Docker
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Ajout repo Docker
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{
+          ansible_lsb.codename }} stable"
+        state: present
+
+    - name: Installation Docker
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: yes
+
+    - name: Vérifcation exécution Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Installation Docker Compose
+      shell: |
+        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+      args:
+        executable: /bin/bash
+
+    - name: Créer docker-compose.yml pour node-exporter
+      copy:
+        content: |
+          version: '3'
+          services:
+            node-exporter:
+              image: prom/node-exporter:latest
+              args:
+                - --path.procfs=/host/proc
+                - --path.sysfs=/host/sys
+                - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+              ports:
+                - "9100:9100"
+              volumes:
+                - /proc:/host/proc:ro
+                - /sys:/host/sys:ro
+                - /:/rootfs:ro
+
+          networks:
+            monitoring:
+              driver: bridge
+        dest: /home/vagrant/docker-compose-node-exporter.yml
+        mode: "0644"
+
+    - name: Lancer node-exporter avec Docker Compose
+      shell: |
+        docker-compose -f /home/vagrant/docker-compose-node-exporter.yml up -d
