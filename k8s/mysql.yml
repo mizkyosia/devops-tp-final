@@ -23,7 +23,7 @@ spec:
             - containerPort: 3306
               name: mysql
           volumeMounts:
-            - name: mysql-pvc
+            - name: mysql-storage
               mountPath: /var/lib/mysql
           resources:
             limits:
@@ -32,6 +32,10 @@ spec:
             requests:
               memory: "512Mi"
               cpu: "250m"
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
 ---
 apiVersion: v1
 kind: Service
