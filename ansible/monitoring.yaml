@@ -2,21 +2,20 @@
 - hosts: vm-monitoring
   become: true
   tasks:
-    # Create monitoring directory
-    - name: Create monitoring directory
+    - name: Créer répertoire de monitoring
       file:
         path: /opt/monitoring
         state: directory
         mode: "0755"
 
     # Prometheus configuration
-    - name: Create Prometheus config directory
+    - name: Prometheus config répertoire
       file:
         path: /opt/monitoring/prometheus
         state: directory
         mode: "0755"
 
-    - name: Create prometheus.yml configuration
+    - name: Prometheus config
       copy:
         content: |
           global:
@@ -34,8 +33,7 @@
         dest: /opt/monitoring/prometheus/prometheus.yml
         mode: "0644"
 
-    # Docker Compose configuration
-    - name: Create docker-compose.yml for monitoring stack
+    - name: Créer config docker-compose
       copy:
         content: |
           version: '3.8'
@@ -84,8 +82,7 @@
         dest: /opt/monitoring/docker-compose.yml
         mode: "0644"
 
-    # Grafana provisioning configuration
-    - name: Create Grafana provisioning directories
+    - name: Grafana répertoires de provisioning
       file:
         path: "{{ item }}"
         state: directory
@@ -95,7 +92,7 @@
         - /opt/monitoring/grafana/provisioning/datasources
         - /opt/monitoring/grafana/provisioning/dashboards
 
-    - name: Create Grafana datasources provisioning
+    - name: Grafana datasources
       copy:
         content: |
           apiVersion: 1
@@ -110,7 +107,7 @@
         dest: /opt/monitoring/grafana/provisioning/datasources/prometheus.yml
         mode: "0644"
 
-    - name: Create Grafana dashboards provisioning
+    - name: Grafana dashboards provisioning
       copy:
         content: |
           apiVersion: 1
@@ -127,21 +124,19 @@
         dest: /opt/monitoring/grafana/provisioning/dashboards/dashboards.yml
         mode: "0644"
 
-    # Download Node Exporter dashboard
-    - name: Download Node Exporter dashboard JSON
+    - name: Téléchargement dashboard Node Exporter
       get_url:
         url: https://raw.githubusercontent.com/rfmoz/grafana-dashboards/refs/heads/master/prometheus/node-exporter-full.json
         dest: /opt/monitoring/grafana/provisioning/dashboards/node-exporter-dashboard.json
         mode: "0644"
 
-    # Start monitoring stack
-    - name: Start monitoring stack with docker-compose
+    - name: Lancement stack de monitoring
       shell: |
         cd /opt/monitoring && docker-compose up -d
       args:
         executable: /bin/bash
 
-    - name: Wait for Prometheus to be ready
+    - name: En attente de Prometheus
       uri:
         url: http://localhost:9090/-/healthy
         status_code: 200
@@ -150,7 +145,7 @@
       retries: 30
       delay: 2
 
-    - name: Wait for Grafana to be ready
+    - name: En attente de Grafana
       uri:
         url: http://localhost:3000/api/health
         status_code: 200
@@ -159,7 +154,7 @@
       retries: 30
       delay: 2
 
-    - name: Display access information
+    - name: Affichage informations d'accès
       debug:
         msg:
           - "Monitoring stack deployed successfully!"

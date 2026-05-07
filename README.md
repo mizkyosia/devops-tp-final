@@ -32,11 +32,12 @@ L'image a été publiée sur Dockerhub sous le nom [`mizkyosia/devops-tp-final`]
 
 ## Partie 3 - Kubernetes
 
-On crée notre [manifest](./manifest.yml) de déploiement Kubernetes, qui contient 4 systèmes :
+On crée 2 manifets de déploiement Kubernetes nommées [api](./k8s/api.yml) et [mysql](./k8s/mysql.yml), qui contiennent 5 systèmes :
 
-- Un `StatefulSet` permettant de déployer la BDD. Ici, il n'y a pas réellement de différence entre StatefulSet et Deployment car on ne mets qu'une seule réplique de la BDD
+- Un `Pod` permettant de déployer la BDD.
+- Un `PersistentVolumeClaim` pour garder en mémoire les données de la BDD
 - Un `Deployment` permettant de déployer l'API elle-même, depuis le container Docker publié sur DockerHub
-- 2 services `NodePort` permettant à Prometheus de se connecter à la BDD et l'API pour le monitoring
+- 2 services `ClusterIP` permettant à Prometheus de se connecter à la BDD et l'API pour le monitoring
 
 ## Partie 4 - CI/CD
 
@@ -53,7 +54,7 @@ On définit notre [pipeline CI/CD](./.github/workflows/ci.yaml), qui est compos�
 Nous avons ici besoin d'une seconde VM. Nous allons donc rajouter une nouvelle déclaration de VM dans le [Vagrantfile](./Vagrantfile).
 
 Nous allons aussi avoir besoin d'un nouveau provisioning Ansible.
-On crée donc un [2ème playbook](./ansible/playbook2.yaml) qui permet de mettre en place tous les outils nécessaires au monitoring. Il va :
+On crée donc un [2ème playbook](./ansible/monitoring.yaml) qui permet de mettre en place tous les outils nécessaires au monitoring. Il va :
 
 - Installer et lancer Docker
 - Installer docker compose
@@ -63,5 +64,3 @@ On crée donc un [2ème playbook](./ansible/playbook2.yaml) qui permet de mettre
 - Télécharger le dashboard et l'ajouter à Grafana
 - Lancer le `docker compose`
 - Vérifier que les 3 processus marchent bien
-
-Enfin, on modifie le manifest Kubernetes pour rajouter un pod `prometheus/node_exporter` pour monitorer nos déploiements.
