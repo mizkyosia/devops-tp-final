@@ -119,7 +119,7 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 30001
-      nodePort: 9100
+      targetPort: 3000
+      nodePort: 30001
       protocol: TCP
   type: NodePort
