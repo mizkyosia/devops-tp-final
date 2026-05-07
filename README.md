@@ -37,3 +37,11 @@ On crée notre [manifest](./manifest.yml) de déploiement Kubernetes, qui contie
 - 2 services `NodePort` permettant à Prometheus de se connecter à la BDD et l'API pour le monitoring
 
 ## Partie 4 - CI/CD
+
+On définit notre [pipeline CI/CD](.github/workflows/ci.yaml), qui est composée de 5 grands steps :
+
+- Checkout du repo : Permet de mettre à jour le repo Git, ainsi que les sous-modules Git (on en utilise 1 pour l'API)
+- Vérifier que les exécutables nécessaires sont bien installés sur l'hôte du runner
+- Créer/lancer les VMs avec `vagrant up`
+- Build l'image Docker et la tag localement
+- Lancer le cluster k3s dans la VM dédiée à cet effet
