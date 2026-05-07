@@ -29,3 +29,4 @@ La taille finale de l'image est donc de **_174MB_** (contre 202MB sans multi-sta
 L'image a été publiée sur Dockerhub sous le nom [`mizkyosia/devops-tp-final`](https://hub.docker.com/repository/docker/mizkyosia/devops-tp-final/general)
 
 ## Partie 3 - Kubernetes
+
