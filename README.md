@@ -12,7 +12,7 @@ Nous avons choisi la distribution Debian Bookworm (Debian 12) car il s'agit de l
 
 Pour mettre en route la VM, il suffit d'utiliser la commande `vagrant up` dans le dossier racine du TP. Il suffit ensuite d'utiliser `vagrant ssh vm-kubernetes` (dans le même dossier) pour se connecter à la machine virtuelle.
 
-Lors de sa création, la VM sera automatiquement provisionné par un [playbook](./ansible/playbook.yaml) Ansible, permettant d'installer automatiquement `k3s` ainsi que de copier le manifest kubernetes dans la VM.
+Lors de sa création, la VM sera automatiquement provisionné par un [playbook](./ansible/k3s.yaml) Ansible, permettant d'installer automatiquement `k3s` ainsi que de copier le manifest kubernetes dans la VM.
 
 ## Partie 2 - Conteneurisation
 
@@ -56,11 +56,16 @@ Nous avons ici besoin d'une seconde VM. Nous allons donc rajouter une nouvelle d
 Nous allons aussi avoir besoin d'un nouveau provisioning Ansible.
 On crée donc un [2ème playbook](./ansible/monitoring.yaml) qui permet de mettre en place tous les outils nécessaires au monitoring. Il va :
 
-- Installer et lancer Docker
-- Installer docker compose
 - Configurer Prometheus
-- Créer `docker compose` avec Prometheus, Grafana et `prometheus/node_exporter`
+- Créer un `docker compose` avec Prometheus et Grafana
 - Créer les ressources nécessaires à Grafana (monitoring directories)
 - Télécharger le dashboard et l'ajouter à Grafana
 - Lancer le `docker compose`
 - Vérifier que les 3 processus marchent bien
+
+Enfin, nous avons besoin d'installer `node_exporter` sur les 2 VMs. Nous allons donc créer un [dernier playbook](./ansible/node-exporter.yaml) qui tournera avant les 2 autres. Il effectue les actions suivantes :
+
+- Installation de Docker
+- Installation de docker-compose
+- Création d'un docker-compose pour `node_exporter`
+- Lancement du Docker compose

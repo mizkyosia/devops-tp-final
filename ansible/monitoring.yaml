@@ -51,8 +51,6 @@
                 - '--config.file=/etc/prometheus/prometheus.yml'
                 - '--storage.tsdb.path=/prometheus'
               restart: unless-stopped
-              networks:
-                - monitoring
 
             grafana:
               image: grafana/grafana:latest
@@ -69,16 +67,10 @@
               depends_on:
                 - prometheus
               restart: unless-stopped
-              networks:
-                - monitoring
 
           volumes:
             prometheus-data:
             grafana-data:
-
-          networks:
-            monitoring:
-              driver: bridge
         dest: /opt/monitoring/docker-compose.yml
         mode: "0644"
 
