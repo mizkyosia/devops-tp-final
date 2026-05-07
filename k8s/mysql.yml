@@ -23,7 +23,7 @@ spec:
             - containerPort: 3306
               name: mysql
           volumeMounts:
-            - name: mysql-storage
+            - name: mysql-pvc
               mountPath: /var/lib/mysql
           resources:
             limits:
