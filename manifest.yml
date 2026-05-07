@@ -148,7 +148,6 @@ kind: Service
 metadata:
   name: mysql-service
 spec:
-  clusterIP: None
   selector:
     app: devops-mysql
   ports:
@@ -156,6 +155,7 @@ spec:
       port: 3306
       targetPort: 3306
       protocol: TCP
+  type: NodePort
 ---
 apiVersion: v1
 kind: Service
@@ -169,4 +169,4 @@ spec:
       port: 80
       targetPort: 3000
       protocol: TCP
-  type: ClusterIP
+  type: NodePort

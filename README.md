@@ -10,7 +10,9 @@ Nous avons décidé d'utiliser Vagrant pour le déploiement de la VM, par simpli
 
 Nous avons choisi la distribution Debian Bookworm (Debian 12) car il s'agit de la dernière version stable en date, et donc la mieux maintenue.
 
-Pour mettre en route la VM, il suffit d'utiliser la commande `vagrant up` dans le dossier racine du TP. Il suffit ensuite d'utiliser `vagrant ssh` (dans le même dossier) pour se connecter à la machine virtuelle 
+Pour mettre en route la VM, il suffit d'utiliser la commande `vagrant up` dans le dossier racine du TP. Il suffit ensuite d'utiliser `vagrant ssh vm-kubernetes` (dans le même dossier) pour se connecter à la machine virtuelle.
+
+Lors de sa création, la VM sera automatiquement provisionné par un [playbook](./ansible/playbook.yaml) Ansible, permettant d'installer automatiquement `k3s` ainsi que de copier le manifest kubernetes dans la VM.
 
 ## Partie 2 - Conteneurisation
 
@@ -38,10 +40,14 @@ On crée notre [manifest](./manifest.yml) de déploiement Kubernetes, qui contie
 
 ## Partie 4 - CI/CD
 
-On définit notre [pipeline CI/CD](.github/workflows/ci.yaml), qui est composée de 5 grands steps :
+On définit notre [pipeline CI/CD](./.github/workflows/ci.yaml), qui est composée de 5 grands steps :
 
 - Checkout du repo : Permet de mettre à jour le repo Git, ainsi que les sous-modules Git (on en utilise 1 pour l'API)
 - Vérifier que les exécutables nécessaires sont bien installés sur l'hôte du runner
 - Créer/lancer les VMs avec `vagrant up`
 - Build l'image Docker et la tag localement
 - Lancer le cluster k3s dans la VM dédiée à cet effet
+
+## Partie 5 - Monitoring
+
+On crée donc un [2ème playbook](./ansible/playbook2.yaml) qui nous servira de 
