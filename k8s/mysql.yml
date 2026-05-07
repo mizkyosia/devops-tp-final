@@ -12,25 +12,26 @@ spec:
     metadata:
       labels:
         app: devops-mysql
-    containers:
-      - name: devops-tp-mysql
-        image: mysql:latest
-        envFrom: 
-          - secretRef:
-              name: mysql-secret
-        ports:
-          - containerPort: 3306
-            name: mysql
-        volumeMounts:
-          - name: mysql-storage
-            mountPath: /var/lib/mysql
-        resources:
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
+    spec:
+      containers:
+        - name: devops-tp-mysql
+          image: mysql:latest
+          envFrom: 
+            - secretRef:
+                name: mysql-secret
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
 ---
 apiVersion: v1
 kind: Service
